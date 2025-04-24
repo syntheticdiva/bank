@@ -4,8 +4,12 @@ package com.java.bank.controller;
 import com.java.bank.dto.*;
 import com.java.bank.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.web.PageableDefault;
@@ -25,11 +29,21 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/search")
+    @Parameter(
+            name = "pageable",
+            example = "{\n  \"page\": 0,\n  \"size\": 10,\n  \"sort\": [\"name,asc\"]\n}",
+            schema = @Schema(
+                    type = "object",
+                    implementation = Pageable.class
+            )
+    )
     public Page<UserDTO> searchUsers(
             @RequestParam(required = false) String name,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "dd.MM.yyyy") LocalDate dateOfBirth,
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) String phone,
+            @RequestParam(required = false)
+            @DateTimeFormat(pattern = "dd.MM.yyyy") LocalDate dateOfBirth,
+            @RequestParam(required = false) @Email String email,
+            @RequestParam(required = false)
+            @Pattern(regexp = "^7\\d{10}$") String phone,
             @PageableDefault Pageable pageable) {
 
         return userService.searchUsers(name, dateOfBirth, email, phone, pageable);

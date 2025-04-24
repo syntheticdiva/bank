@@ -50,6 +50,7 @@ public class SecurityConfig {
     private static final class SecurityConstants {
         private static final String[] PUBLIC_PATHS = {
                 "/api/auth/**",
+                "/api/users/search",
                 "/swagger-ui/**",
                 "/v3/api-docs/**",
                 "/webjars/**",

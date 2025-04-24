@@ -32,6 +32,7 @@ public class UserService {
     private final AccountRepository accountRepository;
     private final UserMapper userMapper;
 
+    @Transactional(readOnly = true)
     public Page<UserDTO> searchUsers(String name, LocalDate dateOfBirth,
                                      String email, String phone, Pageable pageable) {
         Specification<User> spec = Specification.where(null);
@@ -50,7 +51,12 @@ public class UserService {
         }
 
         return userRepository.findAll(spec, pageable)
-                .map(userMapper::toDto);
+                .map(user -> {
+                    // Инициализация коллекций в рамках транзакции
+                    user.getEmails().size();
+                    user.getPhones().size();
+                    return userMapper.toDto(user);
+                });
     }
 
     @Transactional
@@ -210,6 +216,7 @@ public class UserService {
 //    return userRepository.findByIdWithEmails(userId)
 //            .orElseThrow(() -> new EntityNotFoundException("User not found"));
 //}
+    @Transactional(readOnly = true)
     private User getUserById(Long userId) {
         return userRepository.findByIdWithEmailsAndPhones(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));

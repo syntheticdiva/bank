@@ -3,6 +3,8 @@ package com.java.bank.repository;
 
 
 import com.java.bank.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -22,11 +24,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     boolean existsByName(@Param("name") String name);
 
     // Для спецификаций
-    default List<User> findAll(Specification<User> spec) {
-        return findAll(spec, Sort.unsorted());
-    }
-//    Optional<User> findByEmail(String email);
-
+    @EntityGraph(attributePaths = {"emails", "phones"})
+    Page<User> findAll(Specification<User> spec, Pageable pageable);
 
     @Query("SELECT u FROM User u " +
             "LEFT JOIN FETCH u.emails " +
@@ -46,9 +45,16 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 //            "(SELECT e FROM EmailData e WHERE e.user = u AND e.email = :login) OR " +
 //            "EXISTS (SELECT p FROM PhoneData p WHERE p.user = u AND p.phone = :login)")
 //    Optional<User> findByEmailOrPhone(@Param("login") String login);
-    @Query("SELECT u FROM User u WHERE EXISTS " +
-            "(SELECT e FROM EmailData e WHERE e.user = u AND e.email = :credential) OR " +
-            "EXISTS (SELECT p FROM PhoneData p WHERE p.user = u AND p.phone = :credential)")
+//    @Query("SELECT u FROM User u WHERE EXISTS " +
+//            "(SELECT e FROM EmailData e WHERE e.user = u AND e.email = :credential) OR " +
+//            "EXISTS (SELECT p FROM PhoneData p WHERE p.user = u AND p.phone = :credential)")
+//    Optional<User> findByEmailOrPhone(@Param("credential") String credential);
+
+    @EntityGraph(attributePaths = {"emails", "phones"})
+    @Query("SELECT DISTINCT u FROM User u " +
+            "LEFT JOIN FETCH u.emails e " +
+            "LEFT JOIN FETCH u.phones p " +
+            "WHERE e.email = :credential OR p.phone = :credential")
     Optional<User> findByEmailOrPhone(@Param("credential") String credential);
 
     @EntityGraph(attributePaths = {"emails", "phones"})
@@ -69,6 +75,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @EntityGraph(attributePaths = {"emails", "phones"})
     @Query("SELECT u FROM User u WHERE u.id = :userId")
     Optional<User> findByIdWithEmailsAndPhones(@Param("userId") Long userId);
+
 }
 
 
