@@ -44,10 +44,12 @@ public class UserService {
         Specification<User> spec = Specification.where(null);
 
         if (StringUtils.hasText(name)) {
-            spec = spec.and(UserSpecifications.hasNameStartingWith(name));
+            spec = spec.and((root, query, cb) ->
+                    cb.like(root.get("name"), cb.literal(name) + "%"));
         }
         if (dateOfBirth != null) {
-            spec = spec.and(UserSpecifications.bornAfter(dateOfBirth));
+            spec = spec.and((root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("dateOfBirth"), dateOfBirth));
         }
         if (StringUtils.hasText(email)) {
             spec = spec.and(UserSpecifications.hasExactEmail(email));

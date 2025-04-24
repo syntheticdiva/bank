@@ -17,7 +17,7 @@ public class UserSpecifications {
                         cb.like(root.get("name"), name + "%");
     }
 
-    public static Specification<User> bornAfter(LocalDate date) {
+    public static Specification<User> bornAfterOrEqual(LocalDate date) {
         return (root, query, cb) ->
                 date == null ? null :
                         cb.greaterThanOrEqualTo(root.get("dateOfBirth"), date);
