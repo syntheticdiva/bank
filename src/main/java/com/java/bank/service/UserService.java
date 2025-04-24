@@ -12,12 +12,18 @@ import com.java.bank.repository.AccountRepository;
 import com.java.bank.repository.EmailRepository;
 import com.java.bank.repository.PhoneRepository;
 import com.java.bank.repository.UserRepository;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import org.springframework.data.domain.Pageable;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -44,12 +50,10 @@ public class UserService {
         Specification<User> spec = Specification.where(null);
 
         if (StringUtils.hasText(name)) {
-            spec = spec.and((root, query, cb) ->
-                    cb.like(root.get("name"), cb.literal(name) + "%"));
+            spec = spec.and(UserSpecifications.hasNameStartingWith(name));
         }
         if (dateOfBirth != null) {
-            spec = spec.and((root, query, cb) ->
-                    cb.greaterThanOrEqualTo(root.get("dateOfBirth"), dateOfBirth));
+            spec = spec.and(UserSpecifications.bornAfterOrEqual(dateOfBirth));
         }
         if (StringUtils.hasText(email)) {
             spec = spec.and(UserSpecifications.hasExactEmail(email));
@@ -202,7 +206,15 @@ public class UserService {
         user.getPhones().forEach(p -> p.setPrimary(false));
         newPrimary.setPrimary(true);
     }
-
+    public static Specification<User> fetchEmailsAndPhones() {
+        return (root, query, cb) -> {
+            if (Long.class != query.getResultType()) { // Чтобы не ломать count-запросы
+                root.fetch("emails", JoinType.LEFT);
+                root.fetch("phones", JoinType.LEFT);
+            }
+            return null;
+        };
+    }
     @Transactional(readOnly = true)
     private User getUserById(Long userId) {
         return userRepository.findByIdWithEmailsAndPhones(userId)
