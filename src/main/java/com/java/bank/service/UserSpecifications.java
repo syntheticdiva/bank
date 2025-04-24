@@ -12,35 +12,32 @@ import java.time.LocalDate;
 public class UserSpecifications {
 
     public static Specification<User> hasNameStartingWith(String name) {
-        return (root, query, cb) ->
-                name != null ?
-                        cb.like(cb.lower(root.get("name")), name.toLowerCase() + "%") :
-                        null;
+        return (root, query, cb) -> cb.like(
+                cb.lower(root.get("name")),
+                name.toLowerCase() + "%"
+        );
     }
 
     public static Specification<User> bornAfter(LocalDate date) {
         return (root, query, cb) ->
-                date != null ?
-                        cb.greaterThan(root.get("dateOfBirth"), date) :
-                        null;
+                date == null ? null :
+                        cb.greaterThanOrEqualTo(root.get("dateOfBirth"), date);
     }
-
-    public static Specification<User> hasEmail(String email) {
+    public static Specification<User> hasExactEmail(String email) {
         return (root, query, cb) -> {
-            if (email == null) return null;
             query.distinct(true);
-            Join<User, EmailData> emailJoin = root.join("emails", JoinType.INNER);
+            Join<User, EmailData> emailJoin = root.join("emails");
             return cb.equal(emailJoin.get("email"), email);
         };
     }
 
-    public static Specification<User> hasPhone(String phone) {
+    public static Specification<User> hasExactPhone(String phone) {
         return (root, query, cb) -> {
-            if (phone == null) return null;
-            query.distinct(true); // Убираем дубликаты
+            query.distinct(true);
             Join<User, PhoneData> phoneJoin = root.join("phones");
             return cb.equal(phoneJoin.get("phone"), phone);
         };
     }
+
 }
 

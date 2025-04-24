@@ -12,13 +12,20 @@ import com.java.bank.repository.AccountRepository;
 import com.java.bank.repository.EmailRepository;
 import com.java.bank.repository.PhoneRepository;
 import com.java.bank.repository.UserRepository;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 
@@ -33,32 +40,31 @@ public class UserService {
     private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
-    public Page<UserDTO> searchUsers(String name, LocalDate dateOfBirth,
-                                     String email, String phone, Pageable pageable) {
+    public Page<UserDTO> searchUsers(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) LocalDate dateOfBirth,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone,
+            Pageable pageable) {
+
         Specification<User> spec = Specification.where(null);
 
-        if (name != null) {
+        if (StringUtils.hasText(name)) {
             spec = spec.and(UserSpecifications.hasNameStartingWith(name));
         }
         if (dateOfBirth != null) {
             spec = spec.and(UserSpecifications.bornAfter(dateOfBirth));
         }
-        if (email != null) {
-            spec = spec.and(UserSpecifications.hasEmail(email));
+        if (StringUtils.hasText(email)) {
+            spec = spec.and(UserSpecifications.hasExactEmail(email));
         }
-        if (phone != null) {
-            spec = spec.and(UserSpecifications.hasPhone(phone));
+        if (StringUtils.hasText(phone)) {
+            spec = spec.and(UserSpecifications.hasExactPhone(phone));
         }
 
         return userRepository.findAll(spec, pageable)
-                .map(user -> {
-                    // Инициализация коллекций в рамках транзакции
-                    user.getEmails().size();
-                    user.getPhones().size();
-                    return userMapper.toDto(user);
-                });
+                .map(userMapper::toDto);
     }
-
     @Transactional
     public void addEmail(Long userId, String newEmail) {
         User user = getUserById(userId);
@@ -74,7 +80,7 @@ public class UserService {
         EmailData email = new EmailData();
         email.setUser(user);
         email.setEmail(newEmail);
-        email.setPrimary(user.getEmails().isEmpty()); // Первый email становится основным
+        email.setPrimary(user.getEmails().isEmpty());
         emailRepository.save(email);
     }
     @Transactional
@@ -82,8 +88,6 @@ public class UserService {
         if (oldEmail.equalsIgnoreCase(newEmail)) {
             throw new IllegalArgumentException("New email must be different");
         }
-
-        // Загружаем пользователя с явной загрузкой emails
         User user = userRepository.findUserWithEmails(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
@@ -97,7 +101,6 @@ public class UserService {
         }
 
         targetEmail.setEmail(newEmail);
-        // Не вызывайте emailRepository.save() — изменения сохранятся при коммите транзакции
     }
 
     @Transactional
@@ -118,9 +121,8 @@ public class UserService {
             throw new IllegalStateException("Cannot delete primary email");
         }
 
-        // Удаляем через коллекцию пользователя с orphanRemoval
         user.getEmails().remove(emailData);
-        userRepository.save(user); // Не обязательно, но гарантирует синхронизацию
+        userRepository.save(user);
     }
 
     @Transactional
@@ -150,7 +152,7 @@ public class UserService {
         PhoneData phone = new PhoneData();
         phone.setUser(user);
         phone.setPhone(newPhone);
-        phone.setPrimary(user.getPhones().isEmpty()); // Первый телефон становится основным
+        phone.setPrimary(user.getPhones().isEmpty());
         phoneRepository.save(phone);
     }
     @Transactional
@@ -174,7 +176,7 @@ public class UserService {
     }
     @Transactional
     public void deletePhone(Long userId, String phone) {
-        User user = getUserById(userId); // Загружаем с телефонами
+        User user = getUserById(userId);
 
         if (user.getPhones().size() == 1) {
             throw new IllegalStateException("Cannot delete last phone");
@@ -189,9 +191,8 @@ public class UserService {
             throw new IllegalStateException("Cannot delete primary phone. Set new primary first.");
         }
 
-        // Удаляем через коллекцию пользователя с orphanRemoval
         user.getPhones().remove(phoneData);
-        userRepository.save(user); // Актуализируем состояние
+        userRepository.save(user);
     }
     @Transactional
     public void setPrimaryPhone(Long userId, String phone) {
@@ -205,27 +206,19 @@ public class UserService {
         user.getPhones().forEach(p -> p.setPrimary(false));
         newPrimary.setPrimary(true);
     }
-
-
-
-    //    private User getUserById(Long userId) {
-//        return userRepository.findById(userId)
-//                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-//    }
-//private User getUserById(Long userId) {
-//    return userRepository.findByIdWithEmails(userId)
-//            .orElseThrow(() -> new EntityNotFoundException("User not found"));
-//}
+    public static Specification<User> fetchEmailsAndPhones() {
+        return (root, query, cb) -> {
+            if (Long.class != query.getResultType()) { // Чтобы не ломать count-запросы
+                root.fetch("emails", JoinType.LEFT);
+                root.fetch("phones", JoinType.LEFT);
+            }
+            return null;
+        };
+    }
     @Transactional(readOnly = true)
     private User getUserById(Long userId) {
         return userRepository.findByIdWithEmailsAndPhones(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
-    }
-
-    private void validateEmailUniqueness(String email) {
-        if (emailRepository.existsByEmail(email)) {
-            throw new DuplicateEntityException("Email already registered");
-        }
     }
 
 }

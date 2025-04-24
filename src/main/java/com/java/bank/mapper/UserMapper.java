@@ -29,12 +29,7 @@ public interface UserMapper {
                 .map(EmailData::getEmail)
                 .collect(Collectors.toSet());
     }
-//    @Named("emailsToSet")
-//    default Set<String> emailsToSet(Set<EmailData> emails){
-//        return emails.stream()
-//                .map(EmailData::getEmail)
-//                .collect(Collectors.toSet());
-//    }
+
     @Named("phonesToSet")
     default Set<String> phonesToSet(Set<PhoneData> phones){
         return phones.stream()

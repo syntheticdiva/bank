@@ -27,28 +27,27 @@ import java.time.LocalDate;
 @Tag(name = "User Management", description = "API для управления пользователями и их контактами")
 public class UserController {
     private final UserService userService;
-
     @GetMapping("/search")
-    @Parameter(
-            name = "pageable",
-            example = "{\n  \"page\": 0,\n  \"size\": 10,\n  \"sort\": [\"name,asc\"]\n}",
-            schema = @Schema(
-                    type = "object",
-                    implementation = Pageable.class
-            )
-    )
-    public Page<UserDTO> searchUsers(
+    @Operation(summary = "Поиск пользователей с фильтрацией")
+    public ResponseEntity<Page<UserDTO>> searchUsers(
+            @Parameter(description = "User name (partial match)", example = "John")
             @RequestParam(required = false) String name,
+
+            @Parameter(description = "Date of birth in format dd.MM.yyyy", example = "15.05.1990")
             @RequestParam(required = false)
             @DateTimeFormat(pattern = "dd.MM.yyyy") LocalDate dateOfBirth,
+
+            @Parameter(description = "Email address", example = "user@example.com")
             @RequestParam(required = false) @Email String email,
-            @RequestParam(required = false)
-            @Pattern(regexp = "^7\\d{10}$") String phone,
-            @PageableDefault Pageable pageable) {
 
-        return userService.searchUsers(name, dateOfBirth, email, phone, pageable);
+            @Parameter(description = "Phone number starting with 7 followed by 10 digits", example = "79123456789")
+            @RequestParam(required = false) @Pattern(regexp = "^7\\d{10}$") String phone,
+
+            @Parameter(hidden = true) @PageableDefault(size = 10) Pageable pageable) {
+
+        Page<UserDTO> result = userService.searchUsers(name, dateOfBirth, email, phone, pageable);
+        return ResponseEntity.ok(result);
     }
-
     @PutMapping("/emails")
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<ApiResponse> updateEmail(
@@ -59,7 +58,6 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponse("Email successfully updated!"));
     }
     @Operation(summary = "Добавить email")
-//    @ApiResponse(responseCode = "200", description = "Email успешно добавлен")
     @PostMapping("/emails")
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<ApiResponse> addEmail(
@@ -70,7 +68,6 @@ public class UserController {
     }
 
     @Operation(summary = "Удалить email")
-//    @ApiResponse(responseCode = "200", description = "Email успешно удален")
     @DeleteMapping("/emails")
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<ApiResponse> deleteEmail(
@@ -80,7 +77,6 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponse("Email успешно удален"));
     }
     @Operation(summary = "Установить основной email")
-//    @ApiResponse(responseCode = "200", description = "Основной email установлен")
     @PostMapping("/emails/primary")
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<ApiResponse> setPrimaryEmail(
@@ -89,9 +85,7 @@ public class UserController {
         userService.setPrimaryEmail(userId, email);
         return ResponseEntity.ok(new ApiResponse("Основной email успешно обновлен"));
     }
-    // Phone endpoints
     @Operation(summary = "Добавить телефон")
-//    @ApiResponse(responseCode = "200", description = "Телефон успешно добавлен")
     @PostMapping("/phones")
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<ApiResponse> addPhone(
@@ -102,7 +96,6 @@ public class UserController {
     }
 
     @Operation(summary = "Обновить телефон")
-//    @ApiResponse(responseCode = "200", description = "Телефон успешно обновлен")
     @PutMapping("/phones")
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<ApiResponse> updatePhone(
@@ -114,7 +107,6 @@ public class UserController {
 
 
     @Operation(summary = "Удалить телефон")
-//    @ApiResponse(responseCode = "200", description = "Телефон успешно удален")
     @DeleteMapping("/phones")
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<ApiResponse> deletePhone(
@@ -125,7 +117,6 @@ public class UserController {
     }
 
     @Operation(summary = "Установить основной телефон")
-//    @ApiResponse(responseCode = "200", description = "Основной телефон установлен")
     @PostMapping("/phones/primary")
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<ApiResponse> setPrimaryPhone(
