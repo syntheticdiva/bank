@@ -96,20 +96,25 @@ public class UserService {
 
     @Transactional
     public void deleteEmail(Long userId, String email) {
-        User user = getUserById(userId);
+        User user = userRepository.findByIdWithEmails(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         if (user.getEmails().size() == 1) {
             throw new IllegalStateException("Cannot delete last email");
         }
 
-        EmailData emailData = emailRepository.findByEmailAndUser(email, user)
+        EmailData emailData = user.getEmails().stream()
+                .filter(e -> e.getEmail().equals(email))
+                .findFirst()
                 .orElseThrow(() -> new EntityNotFoundException("Email not found"));
 
         if (emailData.isPrimary()) {
-            throw new IllegalStateException("Cannot delete primary email. Set new primary first.");
+            throw new IllegalStateException("Cannot delete primary email");
         }
 
-        emailRepository.delete(emailData);
+        // Удаляем через коллекцию пользователя с orphanRemoval
+        user.getEmails().remove(emailData);
+        userRepository.save(user); // Не обязательно, но гарантирует синхронизацию
     }
 
     @Transactional
@@ -150,7 +155,9 @@ public class UserService {
 
         User user = getUserById(userId);
 
-        PhoneData phoneData = phoneRepository.findByPhoneAndUser(oldPhone, user)
+        PhoneData phoneData = user.getPhones().stream()
+                .filter(p -> p.getPhone().equals(oldPhone))
+                .findFirst()
                 .orElseThrow(() -> new EntityNotFoundException("Phone not found"));
 
         if (phoneRepository.existsByPhoneAndUserNot(newPhone, user)) {
@@ -161,20 +168,24 @@ public class UserService {
     }
     @Transactional
     public void deletePhone(Long userId, String phone) {
-        User user = getUserById(userId);
+        User user = getUserById(userId); // Загружаем с телефонами
 
         if (user.getPhones().size() == 1) {
             throw new IllegalStateException("Cannot delete last phone");
         }
 
-        PhoneData phoneData = phoneRepository.findByPhoneAndUser(phone, user)
+        PhoneData phoneData = user.getPhones().stream()
+                .filter(p -> p.getPhone().equals(phone))
+                .findFirst()
                 .orElseThrow(() -> new EntityNotFoundException("Phone not found"));
 
         if (phoneData.isPrimary()) {
             throw new IllegalStateException("Cannot delete primary phone. Set new primary first.");
         }
 
-        phoneRepository.delete(phoneData);
+        // Удаляем через коллекцию пользователя с orphanRemoval
+        user.getPhones().remove(phoneData);
+        userRepository.save(user); // Актуализируем состояние
     }
     @Transactional
     public void setPrimaryPhone(Long userId, String phone) {

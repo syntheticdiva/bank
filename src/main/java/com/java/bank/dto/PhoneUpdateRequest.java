@@ -6,11 +6,9 @@ import lombok.Data;
 
 @Data
 public class PhoneUpdateRequest {
-    @NotBlank
-    @Pattern(regexp = "^\\+\\d{11}$")
+    @Pattern(regexp = "^7\\d{10}$", message = "Invalid phone format. Example: 79123456789")
     private String oldPhone;
 
-    @NotBlank
-    @Pattern(regexp = "^\\+\\d{11}$")
+    @Pattern(regexp = "^7\\d{10}$", message = "Invalid phone format. Example: 79123456789")
     private String newPhone;
 }
