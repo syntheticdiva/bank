@@ -24,4 +24,6 @@ public interface PhoneRepository extends JpaRepository<PhoneData, Long> {
     @Query("DELETE FROM PhoneData p WHERE p.user = :user AND p.phone = :phone")
     void deleteByUserAndPhone(@Param("user") User user,
                               @Param("phone") String phone);
+    boolean existsByPhoneAndUserNot(String phone, User user);
+    Optional<PhoneData> findByPhoneAndUser(String phone, User user);
 }

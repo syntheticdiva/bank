@@ -15,9 +15,11 @@ public class PhoneData {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-    @Column(name = "phone", length = 13, nullable = false, unique = true)
+    @Column(name = "phone", length = 12, nullable = false, unique = true)
     private String phone;
+    @Column(name = "is_primary", nullable = false)
+    private boolean primary;
 }

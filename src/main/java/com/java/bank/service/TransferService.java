@@ -7,9 +7,9 @@ import com.java.bank.exception.InsufficientFundsException;
 import com.java.bank.repository.AccountRepository;
 import com.java.bank.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;

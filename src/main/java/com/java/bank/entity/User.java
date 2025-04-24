@@ -80,4 +80,7 @@ public class User implements UserDetails{
         emailData.setUser(this);
         emails.add(emailData);
     }
+    public String getLoginIdentifier() {
+        return this.getPrimaryEmail();
+    }
 }

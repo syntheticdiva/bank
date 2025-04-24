@@ -3,6 +3,7 @@ package com.java.bank.service;
 
 import com.java.bank.dto.UserDTO;
 import com.java.bank.entity.EmailData;
+import com.java.bank.entity.PhoneData;
 import com.java.bank.entity.User;
 import com.java.bank.exception.DuplicateEntityException;
 import com.java.bank.exception.EntityNotFoundException;
@@ -52,43 +53,154 @@ public class UserService {
                 .map(userMapper::toDto);
     }
 
-
-//    @Transactional
-//    public void addEmail(Long userId, String email) {
-//        validateEmailUniqueness(email);
-//        User user = getUserById(userId);
-//
-//        if (emailRepository.countByUser(user) >= 5) {
-//            throw new IllegalStateException("Maximum 5 emails per user");
-//        }
-//
-//        emailRepository.save(new EmailData(user, email));
-//    }
-
     @Transactional
-    public void updateEmail(Long userId, String oldEmail, String newEmail) {
-        validateEmailUniqueness(newEmail);
+    public void addEmail(Long userId, String newEmail) {
         User user = getUserById(userId);
 
-        EmailData emailData = emailRepository.findByEmail(oldEmail)
-                .orElseThrow(() -> new EntityNotFoundException("Email not found"));
-
-        if (!emailData.getUser().equals(user)) {
-            throw new SecurityException("Email doesn't belong to user");
+        if (emailRepository.countByUser(user) >= 5) {
+            throw new IllegalStateException("Maximum 5 emails per user");
         }
 
-        if (emailRepository.countByUser(user) == 1) {
+        if (emailRepository.existsByEmail(newEmail)) {
+            throw new DuplicateEntityException("Email already registered");
+        }
+
+        EmailData email = new EmailData();
+        email.setUser(user);
+        email.setEmail(newEmail);
+        email.setPrimary(user.getEmails().isEmpty()); // Первый email становится основным
+        emailRepository.save(email);
+    }
+    @Transactional
+    public void updateEmail(Long userId, String oldEmail, String newEmail) {
+        if (oldEmail.equalsIgnoreCase(newEmail)) {
+            throw new IllegalArgumentException("New email must be different");
+        }
+
+        // Загружаем пользователя с явной загрузкой emails
+        User user = userRepository.findUserWithEmails(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        EmailData targetEmail = user.getEmails().stream()
+                .filter(e -> e.getEmail().equals(oldEmail))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Email not found"));
+
+        if (emailRepository.existsByEmailAndOtherUser(newEmail, userId)) {
+            throw new DuplicateEntityException("Email already taken");
+        }
+
+        targetEmail.setEmail(newEmail);
+        // Не вызывайте emailRepository.save() — изменения сохранятся при коммите транзакции
+    }
+
+    @Transactional
+    public void deleteEmail(Long userId, String email) {
+        User user = getUserById(userId);
+
+        if (user.getEmails().size() == 1) {
             throw new IllegalStateException("Cannot delete last email");
         }
 
-        emailData.setEmail(newEmail);
-        emailRepository.save(emailData);
+        EmailData emailData = emailRepository.findByEmailAndUser(email, user)
+                .orElseThrow(() -> new EntityNotFoundException("Email not found"));
+
+        if (emailData.isPrimary()) {
+            throw new IllegalStateException("Cannot delete primary email. Set new primary first.");
+        }
+
+        emailRepository.delete(emailData);
     }
 
-    // Аналогичные методы для телефонов
+    @Transactional
+    public void setPrimaryEmail(Long userId, String email) {
+        User user = getUserById(userId);
 
+        EmailData newPrimary = user.getEmails().stream()
+                .filter(e -> e.getEmail().equals(email))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Email not found"));
+
+        user.getEmails().forEach(e -> e.setPrimary(false));
+        newPrimary.setPrimary(true);
+    }
+    @Transactional
+    public void addPhone(Long userId, String newPhone) {
+        User user = getUserById(userId);
+
+        if (phoneRepository.countByUser(user) >= 5) {
+            throw new IllegalStateException("Maximum 5 phones per user");
+        }
+
+        if (phoneRepository.existsByPhone(newPhone)) {
+            throw new DuplicateEntityException("Phone already registered");
+        }
+
+        PhoneData phone = new PhoneData();
+        phone.setUser(user);
+        phone.setPhone(newPhone);
+        phone.setPrimary(user.getPhones().isEmpty()); // Первый телефон становится основным
+        phoneRepository.save(phone);
+    }
+    @Transactional
+    public void updatePhone(Long userId, String oldPhone, String newPhone) {
+        if (oldPhone.equalsIgnoreCase(newPhone)) {
+            throw new IllegalArgumentException("New phone must be different");
+        }
+
+        User user = getUserById(userId);
+
+        PhoneData phoneData = phoneRepository.findByPhoneAndUser(oldPhone, user)
+                .orElseThrow(() -> new EntityNotFoundException("Phone not found"));
+
+        if (phoneRepository.existsByPhoneAndUserNot(newPhone, user)) {
+            throw new DuplicateEntityException("Phone already taken");
+        }
+
+        phoneData.setPhone(newPhone);
+    }
+    @Transactional
+    public void deletePhone(Long userId, String phone) {
+        User user = getUserById(userId);
+
+        if (user.getPhones().size() == 1) {
+            throw new IllegalStateException("Cannot delete last phone");
+        }
+
+        PhoneData phoneData = phoneRepository.findByPhoneAndUser(phone, user)
+                .orElseThrow(() -> new EntityNotFoundException("Phone not found"));
+
+        if (phoneData.isPrimary()) {
+            throw new IllegalStateException("Cannot delete primary phone. Set new primary first.");
+        }
+
+        phoneRepository.delete(phoneData);
+    }
+    @Transactional
+    public void setPrimaryPhone(Long userId, String phone) {
+        User user = getUserById(userId);
+
+        PhoneData newPrimary = user.getPhones().stream()
+                .filter(p -> p.getPhone().equals(phone))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Phone not found"));
+
+        user.getPhones().forEach(p -> p.setPrimary(false));
+        newPrimary.setPrimary(true);
+    }
+
+
+
+    //    private User getUserById(Long userId) {
+//        return userRepository.findById(userId)
+//                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+//    }
+//private User getUserById(Long userId) {
+//    return userRepository.findByIdWithEmails(userId)
+//            .orElseThrow(() -> new EntityNotFoundException("User not found"));
+//}
     private User getUserById(Long userId) {
-        return userRepository.findById(userId)
+        return userRepository.findByIdWithEmailsAndPhones(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
 
@@ -97,4 +209,5 @@ public class UserService {
             throw new DuplicateEntityException("Email already registered");
         }
     }
+
 }

@@ -2,7 +2,9 @@ package com.java.bank.controller;
 
 import com.java.bank.dto.AuthRequest;
 import com.java.bank.dto.AuthResponse;
+import com.java.bank.entity.User;
 import com.java.bank.security.JwtUtil;
+import com.java.bank.service.CustomUserDetailsService;
 import com.java.bank.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final UserService userService;
+    private final CustomUserDetailsService customUserDetailsService;
 
     /**
      * Аутентифицирует пользователя и возвращает JWT-токен.
@@ -40,27 +43,32 @@ public class AuthController {
      * @param request DTO с учетными данными (email и пароль)
      * @return ответ с JWT-токеном в формате {@link AuthResponse}
      */
+
 //    @PostMapping("/login")
-//    public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
+//    public ResponseEntity<Map<String, String>> login(@RequestBody AuthRequest request) {
 //        Authentication authentication = authenticationManager.authenticate(
-//                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+//                new UsernamePasswordAuthenticationToken(
+//                        request.getEmail(),
+//                        request.getPassword()
+//                )
+//        );
 //
-//        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-//        String token = jwtUtil.generateToken(userDetails);
-//        return ResponseEntity.ok(new AuthResponse(token));
+//        String token = jwtUtil.generateToken((UserDetails) authentication.getPrincipal());
+//
+//        return ResponseEntity.ok(Collections.singletonMap("token", token));
 //    }
+
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestBody AuthRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
 
-        String token = jwtUtil.generateToken((UserDetails) authentication.getPrincipal());
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(request.getEmail());
+        User user = (User) userDetails;
 
-        return ResponseEntity.ok(Collections.singletonMap("token", token));
+        String token = jwtUtil.generateToken(user.getId());
+        return ResponseEntity.ok(new AuthResponse(token));
     }
 
 }

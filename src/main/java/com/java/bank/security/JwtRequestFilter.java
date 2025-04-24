@@ -1,5 +1,6 @@
 package com.java.bank.security;
 
+import com.java.bank.service.CustomUserDetailsService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
@@ -35,6 +36,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private final CustomUserDetailsService customUserDetailsService;
 
     /**
      * Основной метод обработки запроса.
@@ -55,43 +57,35 @@ public class JwtRequestFilter extends OncePerRequestFilter {
      * 4. Установка аутентификации в SecurityContext
      */
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain chain) throws IOException, ServletException {
+        try {
+            String token = extractToken(request);
+            if (token != null && jwtUtil.validateToken(token)) {
+                Long userId = jwtUtil.extractUserId(token);
+                UserDetails userDetails = customUserDetailsService.loadUserById(userId);
 
-        final String authHeader = request.getHeader("Authorization");
-        String username = null;
-        String jwt = null;
-
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            jwt = authHeader.substring(7);
-            try {
-                username = jwtUtil.extractUsername(jwt);
-            } catch (ExpiredJwtException ex) {
-                logger.warn("JWT token expired: " + ex.getMessage());
-                response.sendError(401, "JWT expired");
-                return;
-            } catch (SignatureException ex) {
-                logger.warn("Invalid JWT signature: " + ex.getMessage());
-                response.sendError(403, "Invalid signature");
-                return;
-            } catch (Exception ex) {
-                logger.warn("Invalid JWT token: " + ex.getMessage());
-                response.sendError(400, "Invalid token");
-                return;
-            }
-        }
-
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-            if (jwtUtil.validateToken(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
+        } catch (ExpiredJwtException ex) {
+            response.sendError(401, "JWT expired");
+            return;
+        } catch (Exception ex) {
+            response.sendError(400, "Invalid token");
+            return;
         }
-
         chain.doFilter(request, response);
+    }
+
+    private String extractToken(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+        return null;
     }
 }

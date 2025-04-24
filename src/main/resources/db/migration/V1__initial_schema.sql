@@ -15,12 +15,15 @@ CREATE TABLE account (
 CREATE TABLE email_data (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    email VARCHAR(200) UNIQUE NOT NULL
+    email VARCHAR(200) UNIQUE NOT NULL,
+    is_primary BOOLEAN NOT NULL DEFAULT false
 );
 
 CREATE TABLE phone_data (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    phone VARCHAR(13) UNIQUE NOT NULL CHECK (phone ~ '^7\d{10}$')
+    phone VARCHAR(13) UNIQUE NOT NULL CHECK (phone ~ '^7\d{10}$'),
+    is_primary BOOLEAN NOT NULL DEFAULT false
 );
+
 

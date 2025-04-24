@@ -46,6 +46,25 @@ public class JwtUtil {
         }
         return Keys.hmacShaKeyFor(keyBytes);
     }
+    public String generateToken(Long userId) {
+        return Jwts.builder()
+                .subject(userId.toString())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public Long extractUserId(String token) {
+        return Long.parseLong(
+                Jwts.parser()
+                        .verifyWith(getSigningKey())
+                        .build()
+                        .parseSignedClaims(token)
+                        .getPayload()
+                        .getSubject()
+        );
+    }
 
     /**
      * Генерирует JWT-токен для пользователя.
@@ -115,17 +134,28 @@ public class JwtUtil {
         return claimsResolver.apply(claims);
     }
 
-    /**
-     * Проверяет валидность токена для пользователя.
-     *
-     * @param token JWT-токен
-     * @param userDetails данные пользователя
-     * @return true если токен валиден и соответствует пользователю
-     */
-    public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+//    /**
+//     * Проверяет валидность токена для пользователя.
+//     *
+//     * @param token JWT-токен
+//     * @param userDetails данные пользователя
+//     * @return true если токен валиден и соответствует пользователю
+//     */
+//    public Boolean validateToken(String token, UserDetails userDetails) {
+//        final String username = extractUsername(token);
+//        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+//    }
+public Boolean validateToken(String token) {
+    try {
+        Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token);
+        return true;
+    } catch (Exception ex) {
+        return false;
     }
+}
     /**
      * Проверяет истек ли срок действия токена.
      *
