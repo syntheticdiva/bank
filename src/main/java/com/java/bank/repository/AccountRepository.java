@@ -20,6 +20,4 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     Optional<Account> findByUserId(Long userId);
 
-    @Query("SELECT a.balance FROM Account a WHERE a.user.id = :userId")
-    Optional<BigDecimal> findBalanceByUserId(@Param("userId") Long userId);
 }

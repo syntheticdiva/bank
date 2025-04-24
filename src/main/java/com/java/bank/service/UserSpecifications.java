@@ -12,10 +12,9 @@ import java.time.LocalDate;
 public class UserSpecifications {
 
     public static Specification<User> hasNameStartingWith(String name) {
-        return (root, query, cb) -> cb.like(
-                cb.lower(root.get("name")),
-                name.toLowerCase() + "%"
-        );
+        return (root, query, cb) ->
+                name == null ? null :
+                        cb.like(root.get("name"), name + "%");
     }
 
     public static Specification<User> bornAfter(LocalDate date) {

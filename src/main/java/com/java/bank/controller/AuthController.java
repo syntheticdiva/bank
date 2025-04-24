@@ -44,19 +44,6 @@ public class AuthController {
      * @return ответ с JWT-токеном в формате {@link AuthResponse}
      */
 
-//    @PostMapping("/login")
-//    public ResponseEntity<Map<String, String>> login(@RequestBody AuthRequest request) {
-//        Authentication authentication = authenticationManager.authenticate(
-//                new UsernamePasswordAuthenticationToken(
-//                        request.getEmail(),
-//                        request.getPassword()
-//                )
-//        );
-//
-//        String token = jwtUtil.generateToken((UserDetails) authentication.getPrincipal());
-//
-//        return ResponseEntity.ok(Collections.singletonMap("token", token));
-//    }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
