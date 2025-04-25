@@ -13,17 +13,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OpenApiConfig {
 
-    /**
-     * Создает базовую конфигурацию OpenAPI с метаданными и аутентификацией.
-     *
-     * @return настроенный объект OpenAPI со следующими параметрами:
-     * <ul>
-     *   <li>Название API: "Task Management API"</li>
-     *   <li>Версия API: "1.0"</li>
-     *   <li>Тип аутентификации: Bearer JWT</li>
-     *   <li>Описание: "API Documentation for Task Management System"</li>
-     * </ul>
-     */
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
@@ -43,15 +32,6 @@ public class OpenApiConfig {
                 );
     }
 
-    /**
-     * Группирует все публичные API-эндпоинты.
-     *
-     * @return сконфигурированная группа API со следующими параметрами:
-     * <ul>
-     *   <li>Название группы: "public-apis"</li>
-     *   <li>Паттерн путей: все эндпоинты (/**)</li>
-     * </ul>
-     */
     @Bean
     public GroupedOpenApi publicApi() {
         return GroupedOpenApi.builder()

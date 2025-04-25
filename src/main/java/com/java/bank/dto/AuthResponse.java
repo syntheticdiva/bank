@@ -5,17 +5,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Ответ с JWT токеном аутентификации
- */
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Ответ с JWT токеном после успешной аутентификации")
+@Schema(description = "Response with JWT token after successful authentication")
 public class AuthResponse {
 
     @Schema(
-            description = "JWT токен доступа",
+            description = "JWT access token",
             example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
             requiredMode = Schema.RequiredMode.REQUIRED
     )

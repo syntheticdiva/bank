@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PhoneAddRequest {
-    @Pattern(regexp = "^7\\d{10}$", message = "Некорректный формат телефона")
+    @Pattern(regexp = "^7\\d{10}$", message = "Incorrect phone format")
     private String phone;
 }

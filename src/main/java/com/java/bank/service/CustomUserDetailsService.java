@@ -3,6 +3,7 @@ package com.java.bank.service;
 
 import com.java.bank.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -23,25 +24,15 @@ import org.springframework.stereotype.Service;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
-    /**
-     * Загружает пользователя по email для аутентификации.
-     *
-     * @param credential email || phone пользователя
-     * @return объект {@link UserDetails} с данными пользователя
-     * @throws UsernameNotFoundException если пользователь с указанным email не найден
-     */
-//    @Override
-//    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-//        return userRepository.findByEmail(email)
-//                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
-//    }
+
     @Override
+    @Cacheable(value = "users", key = "#credential")
     public UserDetails loadUserByUsername(String credential) throws UsernameNotFoundException {
-        // Поиск по email или phone
         return userRepository.findByEmailOrPhone(credential)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + credential));
     }
 
+    @Cacheable(value = "users", key = "'id:' + #userId")
     public UserDetails loadUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));

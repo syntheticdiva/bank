@@ -1,34 +1,34 @@
 package com.java.bank.controller;
 
-
 import com.java.bank.dto.*;
 import com.java.bank.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@Tag(name = "User Management", description = "API для управления пользователями и их контактами")
+@Tag(name = "User Management", description = "API for managing users and their contacts")
 public class UserController {
     private final UserService userService;
     @GetMapping("/search")
-    @Operation(summary = "Поиск пользователей с фильтрацией")
+    @Operation(summary = "Search for users with filtering")
     public ResponseEntity<Page<UserDTO>> searchUsers(
             @Parameter(description = "User name (partial match)", example = "John")
             @RequestParam(required = false) String name,
@@ -48,9 +48,17 @@ public class UserController {
         Page<UserDTO> result = userService.searchUsers(name, dateOfBirth, email, phone, pageable);
         return ResponseEntity.ok(result);
     }
-    @Operation(summary = "Обновить email")
+    @Operation(summary = "Update email")
     @PutMapping("/emails")
     @PreAuthorize("#userId == authentication.principal.id")
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "users", key = "'user_with_emails:' + #userId"),
+                    @CacheEvict(value = "users", key = "'user_full:' + #userId"),
+                    @CacheEvict(value = "emails", key = "'email_exists:' + #request.oldEmail"),
+                    @CacheEvict(value = "emails", key = "'email_exists:' + #request.newEmail")
+            }
+    )
     public ResponseEntity<ApiResponse> updateEmail(
             @RequestParam Long userId,
             @RequestBody EmailUpdateRequest request) {
@@ -58,73 +66,73 @@ public class UserController {
         userService.updateEmail(userId, request.getOldEmail(), request.getNewEmail());
         return ResponseEntity.ok(new ApiResponse("Email successfully updated!"));
     }
-    @Operation(summary = "Добавить email")
+    @Operation(summary = "Add email")
     @PostMapping("/emails")
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<ApiResponse> addEmail(
             @RequestParam Long userId,
             @Valid @RequestBody EmailAddRequest request) {
         userService.addEmail(userId, request.getEmail());
-        return ResponseEntity.ok(new ApiResponse("Email успешно добавлен"));
+        return ResponseEntity.ok(new ApiResponse("Email added successfully"));
     }
 
-    @Operation(summary = "Удалить email")
+    @Operation(summary = "Delete email")
     @DeleteMapping("/emails")
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<ApiResponse> deleteEmail(
             @RequestParam Long userId,
             @RequestParam String email) {
         userService.deleteEmail(userId, email);
-        return ResponseEntity.ok(new ApiResponse("Email успешно удален"));
+        return ResponseEntity.ok(new ApiResponse("Email successfully deleted"));
     }
-    @Operation(summary = "Установить основной email")
+    @Operation(summary = "Set primary email")
     @PostMapping("/emails/primary")
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<ApiResponse> setPrimaryEmail(
             @RequestParam Long userId,
             @RequestParam String email) {
         userService.setPrimaryEmail(userId, email);
-        return ResponseEntity.ok(new ApiResponse("Основной email успешно обновлен"));
+        return ResponseEntity.ok(new ApiResponse("Primary email updated successfully"));
     }
-    @Operation(summary = "Добавить телефон")
+    @Operation(summary = "Add phone")
     @PostMapping("/phones")
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<ApiResponse> addPhone(
             @RequestParam Long userId,
             @Valid @RequestBody PhoneAddRequest request) {
         userService.addPhone(userId, request.getPhone());
-        return ResponseEntity.ok(new ApiResponse("Телефон успешно добавлен"));
+        return ResponseEntity.ok(new ApiResponse("Phone added successfully"));
     }
 
-    @Operation(summary = "Обновить телефон")
+    @Operation(summary = "Update phone")
     @PutMapping("/phones")
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<ApiResponse> updatePhone(
             @RequestParam Long userId,
             @Valid @RequestBody PhoneUpdateRequest request) {
         userService.updatePhone(userId, request.getOldPhone(), request.getNewPhone());
-        return ResponseEntity.ok(new ApiResponse("Телефон успешно обновлен"));
+        return ResponseEntity.ok(new ApiResponse("The phone has been updated successfully"));
     }
 
 
-    @Operation(summary = "Удалить телефон")
+    @Operation(summary = "Delete phone")
     @DeleteMapping("/phones")
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<ApiResponse> deletePhone(
             @RequestParam Long userId,
             @RequestParam String phone) {
         userService.deletePhone(userId, phone);
-        return ResponseEntity.ok(new ApiResponse("Телефон успешно удален"));
+        return ResponseEntity.ok(new ApiResponse("Phone successfully removed"));
     }
 
-    @Operation(summary = "Установить основной телефон")
+    @Operation(summary = "Set primary phone")
     @PostMapping("/phones/primary")
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<ApiResponse> setPrimaryPhone(
             @RequestParam Long userId,
             @RequestParam String phone) {
         userService.setPrimaryPhone(userId, phone);
-        return ResponseEntity.ok(new ApiResponse("Основной телефон успешно обновлен"));
+        return ResponseEntity.ok(new ApiResponse("The main phone has been updated successfully"));
     }
 }
 

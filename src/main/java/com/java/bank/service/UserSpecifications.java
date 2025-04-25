@@ -4,7 +4,6 @@ import com.java.bank.entity.EmailData;
 import com.java.bank.entity.PhoneData;
 import com.java.bank.entity.User;
 import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;

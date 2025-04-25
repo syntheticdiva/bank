@@ -1,15 +1,12 @@
 package com.java.bank.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -72,19 +69,8 @@ public class User implements UserDetails{
     }
     public String getPrimaryEmail() {
         return emails.stream()
-                .filter(EmailData::isPrimary)
                 .findFirst()
                 .map(EmailData::getEmail)
                 .orElseThrow(() -> new IllegalStateException("User must have at least one email"));
-    }
-
-    public void addEmail(String email) {
-        EmailData emailData = new EmailData();
-        emailData.setEmail(email);
-        emailData.setUser(this);
-        emails.add(emailData);
-    }
-    public String getLoginIdentifier() {
-        return this.getPrimaryEmail();
     }
 }

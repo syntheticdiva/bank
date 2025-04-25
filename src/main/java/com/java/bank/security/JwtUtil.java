@@ -1,7 +1,5 @@
 package com.java.bank.security;
 
-
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -68,28 +66,6 @@ public class JwtUtil {
     }
 
     /**
-     * Генерирует JWT-токен для пользователя.
-     *
-     * @param userDetails данные пользователя
-     * @return JWT-токен
-     * <p>
-     * Параметры токена:
-     * - Subject: email пользователя
-     * - Время выдачи: текущее время
-     * - Срок действия: 10 часов
-     * - Алгоритм подписи: HMAC-SHA
-     * </p>
-     */
-    public String generateToken(UserDetails userDetails) {
-        return Jwts.builder()
-                .subject(userDetails.getUsername())
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
-                .signWith(getSigningKey())
-                .compact();
-    }
-
-    /**
      * Извлекает все claims (утверждения) из токена.
      *
      * @param token JWT-токен
@@ -135,17 +111,6 @@ public class JwtUtil {
         return claimsResolver.apply(claims);
     }
 
-//    /**
-//     * Проверяет валидность токена для пользователя.
-//     *
-//     * @param token JWT-токен
-//     * @param userDetails данные пользователя
-//     * @return true если токен валиден и соответствует пользователю
-//     */
-//    public Boolean validateToken(String token, UserDetails userDetails) {
-//        final String username = extractUsername(token);
-//        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
-//    }
 public Boolean validateToken(String token) {
     try {
         Jwts.parser()
@@ -157,20 +122,4 @@ public Boolean validateToken(String token) {
         return false;
     }
 }
-    public String extractToken(HttpServletRequest request) {
-        String header = request.getHeader("Authorization");
-        if (header != null && header.startsWith("Bearer ")) {
-            return header.substring(7);
-        }
-        return null;
-    }
-    /**
-     * Проверяет истек ли срок действия токена.
-     *
-     * @param token JWT-токен
-     * @return true если срок действия истек
-     */
-    private Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
 }

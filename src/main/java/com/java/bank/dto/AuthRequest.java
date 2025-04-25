@@ -6,15 +6,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-/**
- * DTO для запроса аутентификации
- */
 @Data
-@Schema(description = "Запрос на аутентификацию пользователя")
+@Schema(description = "User authentication request")
 public class AuthRequest {
 
     @Schema(
-            description = "Электронная почта пользователя",
+            description = "User's email",
             example = "user@example.com",
             requiredMode = Schema.RequiredMode.REQUIRED,
             maxLength = 100
@@ -25,7 +22,7 @@ public class AuthRequest {
     private String email;
 
     @Schema(
-            description = "Пароль пользователя",
+            description = "User password",
             example = "P@ssw0rd!",
             requiredMode = Schema.RequiredMode.REQUIRED,
             minLength = 8,

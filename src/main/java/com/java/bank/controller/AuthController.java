@@ -6,28 +6,19 @@ import com.java.bank.entity.User;
 import com.java.bank.security.JwtUtil;
 import com.java.bank.service.CustomUserDetailsService;
 import com.java.bank.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collections;
-import java.util.Map;
 
-/**
- * Контроллер для обработки запросов аутентификации и регистрации пользователей.
- * <p>
- * Обеспечивает endpoints для входа в систему, регистрации обычных пользователей и администраторов.
- * Использует JWT для аутентификации и Spring Security для управления доступом.
- * </p>
- *
- * @author AlinaSheveleva
- * @version 1.0
- */
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -37,14 +28,7 @@ public class AuthController {
     private final UserService userService;
     private final CustomUserDetailsService customUserDetailsService;
 
-    /**
-     * Аутентифицирует пользователя и возвращает JWT-токен.
-     *
-     * @param request DTO с учетными данными (email и пароль)
-     * @return ответ с JWT-токеном в формате {@link AuthResponse}
-     */
-
-
+    @Operation(summary = "Login")
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
         authenticationManager.authenticate(
