@@ -22,9 +22,11 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     @Query("SELECT a FROM Account a WHERE a.balance < a.initialBalance * 2.07 AND a.balance * 1.10 > a.initialBalance * 2.07")
     List<Account> findByBalanceReachedLimit();
-
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT a FROM Account a WHERE a.balance < a.initialBalance * 2.07")
+    @Query("SELECT a FROM Account a WHERE " +
+            "ROUND(a.balance, 4) < ROUND(a.initialBalance * 2.07, 4) AND " +
+            "ROUND(a.balance * 1.10, 4) > ROUND(a.balance, 4) AND " +
+            "ROUND(a.balance * 1.10, 4) <= ROUND(a.initialBalance * 2.07, 4)")
     List<Account> findAccountsForInterestApply();
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT a FROM Account a WHERE a.user.id = :userId")

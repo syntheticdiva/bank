@@ -8,8 +8,10 @@ CREATE TABLE users (
 CREATE TABLE account (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    balance DECIMAL(19,4) NOT NULL CHECK (balance >= 0),
-    initial_balance DECIMAL(19,4) NOT NULL CHECK (initial_balance > 0)
+    balance DECIMAL(19,4) NOT NULL
+        CHECK (balance >= 0 AND balance <= ROUND(initial_balance * 2.07, 2)),
+    initial_balance DECIMAL(19,4) NOT NULL
+        CHECK (initial_balance > 0)
 );
 
 CREATE TABLE email_data (
@@ -25,5 +27,3 @@ CREATE TABLE phone_data (
     phone VARCHAR(13) UNIQUE NOT NULL CHECK (phone ~ '^7\d{10}$'),
     is_primary BOOLEAN NOT NULL DEFAULT false
 );
-
-
