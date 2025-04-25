@@ -28,18 +28,14 @@ public class EmailData {
     private boolean primary;
 
     @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (object == null || getClass() != object.getClass()) return false;
-        EmailData emailData = (EmailData) object;
-        return Objects.equals(email, emailData.email);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof EmailData)) return false;
+        return id != null && id.equals(((EmailData) o).id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(email);
+        return getClass().hashCode();
     }
-//    public EmailData(String email) {
-//        this.email = email;
-//    }
 }

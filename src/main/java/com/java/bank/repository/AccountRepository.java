@@ -10,16 +10,23 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface AccountRepository extends JpaRepository<Account, Long> {
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT a FROM Account a WHERE a.user.id = :userId")
-    Optional<Account> findByUserIdWithLock(@Param("userId") Long userId);
-
     Optional<Account> findByUserId(Long userId);
 
     @Query("SELECT a.balance FROM Account a WHERE a.user.id = :userId")
     Optional<BigDecimal> findBalanceByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT a FROM Account a WHERE a.balance < a.initialBalance * 2.07 AND a.balance * 1.10 > a.initialBalance * 2.07")
+    List<Account> findByBalanceReachedLimit();
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT a FROM Account a WHERE a.balance < a.initialBalance * 2.07")
+    List<Account> findAccountsForInterestApply();
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT a FROM Account a WHERE a.user.id = :userId")
+    Optional<Account> findByUserIdWithLock(@Param("userId") Long userId);
 }

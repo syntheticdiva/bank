@@ -32,6 +32,9 @@ public interface UserMapper {
 
     @Named("phonesToSet")
     default Set<String> phonesToSet(Set<PhoneData> phones){
+        if (phones == null || !Hibernate.isInitialized(phones)) {
+            return Collections.emptySet();
+        }
         return phones.stream()
                 .map(PhoneData::getPhone)
                 .collect(Collectors.toSet());

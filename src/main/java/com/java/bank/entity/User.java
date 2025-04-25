@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.BatchSize;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -32,8 +33,10 @@ public class User implements UserDetails{
     @Column(name = "password", length = 500, nullable = false)
     private String password;
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @BatchSize(size = 50)
     private Set<EmailData> emails = new HashSet<>();
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     private Set<PhoneData> phones = new HashSet<>();
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Account account;
@@ -69,6 +72,7 @@ public class User implements UserDetails{
     }
     public String getPrimaryEmail() {
         return emails.stream()
+                .filter(EmailData::isPrimary)
                 .findFirst()
                 .map(EmailData::getEmail)
                 .orElseThrow(() -> new IllegalStateException("User must have at least one email"));

@@ -5,18 +5,11 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
-@Data
-public class TransferRequest {
-    @NotNull
-    @Positive
-    private Long toUserId;
+public record TransferRequest(
+        @NotNull @Positive Long toUserId,
+        @NotNull @Positive BigDecimal amount
+) {}
 
-    @NotNull
-    @DecimalMin(value = "0.01", inclusive = true)
-    private BigDecimal amount;
-
-
-}
 
 
 
