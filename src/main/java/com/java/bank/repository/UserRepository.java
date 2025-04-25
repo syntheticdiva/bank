@@ -19,52 +19,14 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
-
-    @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.name = :name")
-    boolean existsByName(@Param("name") String name);
-
-    // Для спецификаций
     @EntityGraph(attributePaths = {"emails", "phones"})
     Page<User> findAll(Specification<User> spec, Pageable pageable);
-
-    @Query("SELECT u FROM User u " +
-            "LEFT JOIN FETCH u.emails " +
-            "LEFT JOIN FETCH u.phones " +
-            "WHERE u.id = :userId")
-    Optional<User> findUserWithDetails(@Param("userId") Long userId);
-
-    @Query("SELECT u FROM User u " +
-            "JOIN FETCH u.emails e " +
-            "WHERE e.email = :email")
-    Optional<User> findByEmail(@Param("email") String email);
-
-//    @Query("SELECT u FROM User u " +
-//            "LEFT JOIN FETCH u.emails " +
-//            "LEFT JOIN FETCH u.phones " +
-//            "WHERE EXISTS " +
-//            "(SELECT e FROM EmailData e WHERE e.user = u AND e.email = :login) OR " +
-//            "EXISTS (SELECT p FROM PhoneData p WHERE p.user = u AND p.phone = :login)")
-//    Optional<User> findByEmailOrPhone(@Param("login") String login);
-//    @Query("SELECT u FROM User u WHERE EXISTS " +
-//            "(SELECT e FROM EmailData e WHERE e.user = u AND e.email = :credential) OR " +
-//            "EXISTS (SELECT p FROM PhoneData p WHERE p.user = u AND p.phone = :credential)")
-//    Optional<User> findByEmailOrPhone(@Param("credential") String credential);
-
     @EntityGraph(attributePaths = {"emails", "phones"})
     @Query("SELECT DISTINCT u FROM User u " +
             "LEFT JOIN FETCH u.emails e " +
             "LEFT JOIN FETCH u.phones p " +
             "WHERE e.email = :credential OR p.phone = :credential")
     Optional<User> findByEmailOrPhone(@Param("credential") String credential);
-
-    @EntityGraph(attributePaths = {"emails", "phones"})
-    @Query("SELECT u FROM User u WHERE u.id = :userId")
-    Optional<User> findUserWithContacts(@Param("userId") Long userId);
-
-    @Query("SELECT COUNT(e) > 0 FROM EmailData e WHERE e.email = :email AND e.user.id <> :userId")
-    boolean existsByEmailAndNotUser(@Param("email") String email,
-                                    @Param("userId") Long userId);
-
     @EntityGraph(attributePaths = {"emails"})
     @Query("SELECT u FROM User u WHERE u.id = :userId")
     Optional<User> findByIdWithEmails(@Param("userId") Long userId);

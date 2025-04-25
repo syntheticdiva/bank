@@ -48,6 +48,7 @@ public class UserController {
         Page<UserDTO> result = userService.searchUsers(name, dateOfBirth, email, phone, pageable);
         return ResponseEntity.ok(result);
     }
+    @Operation(summary = "Обновить email")
     @PutMapping("/emails")
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<ApiResponse> updateEmail(

@@ -41,22 +41,18 @@ public class TransferService {
             TransferRequest request,
             BigDecimal amount
     ) {
-        // 1. Проверка перевода самому себе
         if (fromAccount.getUser().getId().equals(request.toUserId())) {
             throw new InvalidTransferException("Cannot transfer to yourself");
         }
 
-        // 2. Проверка положительности суммы
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new InvalidTransferException("Transfer amount must be positive");
         }
 
-        // 3. Проверка достаточности средств
         if (fromAccount.getBalance().compareTo(amount) < 0) {
             throw new InsufficientFundsException("Insufficient funds for transfer");
         }
 
-        // 4. Дополнительные проверки при необходимости
         if (request.toUserId() == null) {
             throw new InvalidTransferException("Recipient ID is required");
         }
